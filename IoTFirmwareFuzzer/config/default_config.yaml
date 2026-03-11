@@ -1,0 +1,77 @@
+# IoT Firmware Fuzzer 默认配置
+fuzzer:
+  name: "IoTFirmwareFuzzer"
+  version: "1.0.0"
+  timeout: 86400
+  workers: 4
+  max_crashes: 100
+  output_dir: "./output"
+
+emulation:
+  engine: "qemu"
+  qemu_path: "qemu-system-arm"
+  qemu_user_path: "qemu-arm"
+  mode: "user"
+  architecture: "arm"
+  memory: "256M"
+  timeout: 30
+  snapshot: true
+  debug_port: 1234
+
+firmware:
+  extract: true
+  binwalk_path: "binwalk"
+  target_binary: ""
+  root_fs: ""
+
+protocol:
+  name: "mqtt"
+  template_dir: "./config/protocol_templates"
+  port: 1883
+  host: "127.0.0.1"
+
+mutation:
+  strategy: "hybrid"
+  max_mutations_per_seed: 100
+  mutation_ratio: 0.1
+  havoc_rounds: 16
+  protocol_constraint: true
+
+coverage:
+  method: "afl_shm"
+  shm_size: 65536
+  map_size: 65536
+  track_edges: true
+
+expert:
+  enabled: true
+  dangerous_funcs:
+    - "strcpy"
+    - "strcat"
+    - "sprintf"
+    - "gets"
+    - "memcpy"
+    - "printf"
+    - "system"
+  critical_regions: []
+  rl_enabled: true
+  rl_algorithm: "ppo"
+  rl_train_interval: 1000
+  priority_boost: 2.0
+
+seed:
+  init_corpus: "./seeds"
+  min_seed_size: 4
+  max_seed_size: 65536
+  power_schedule: "fast"
+  max_corpus: 1000        # 语料库最大种子数量，超过后自动按优先级修剪
+
+crash:
+  dedup_method: "backtrace"
+  save_inputs: true
+  triage: true
+
+report:
+  format: "html"
+  include_coverage_map: true
+  template: "default"

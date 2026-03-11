@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Firmware Fuzzer - Web UI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+      color: #e4e4e7;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { color: #71717a; font-size: 0.9rem; margin-bottom: 24px; }
+    .card {
+      background: rgba(30, 30, 46, 0.8);
+      border: 1px solid #3f3f46;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card h2 { font-size: 1rem; color: #a1a1aa; margin-bottom: 12px; font-weight: 600; }
+    .form-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }
+    .form-row label { min-width: 80px; color: #a1a1aa; }
+    .form-row input[type="text"], .form-row input[type="number"], .form-row select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #3f3f46;
+      background: #27272a;
+      color: #e4e4e7;
+      font-size: 0.9rem;
+    }
+    .form-row input[type="number"] { width: 100px; }
+    .form-row input[type="text"] { flex: 1; min-width: 120px; }
+    .form-row input:focus, .form-row select:focus { outline: none; border-color: #6366f1; }
+    .checkbox-row { display: flex; gap: 20px; align-items: center; margin-top: 8px; }
+    .checkbox-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #6366f1; }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(90deg, #6366f1, #8b5cf6); color: white; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-secondary { background: #3f3f46; color: #e4e4e7; }
+    .actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .stat-box {
+      background: #27272a;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #3f3f46;
+    }
+    .stat-box .value { font-size: 1.5rem; font-weight: 700; color: #60a5fa; }
+    .stat-box .label { font-size: 0.75rem; color: #71717a; margin-top: 2px; }
+    .stat-box.danger .value { color: #f87171; }
+    .stat-box.success .value { color: #4ade80; }
+    .log-area {
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      border-radius: 8px;
+      padding: 12px;
+      height: 280px;
+      overflow-y: auto;
+      font-family: "Consolas", "Monaco", monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #a1a1aa;
+    }
+    .log-line { margin-bottom: 2px; }
+    .log-line .time { color: #71717a; margin-right: 8px; }
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      animation: pulse 1.5s infinite;
+    }
+    .status-dot.running { background: #4ade80; }
+    .status-dot.stopped { background: #71717a; animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .link-report { color: #60a5fa; text-decoration: none; }
+    .link-report:hover { text-decoration: underline; }
+    .seed-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid #3f3f46; }
+    .countdown { color: #fbbf24; font-size: 0.9rem; margin-left: 8px; }
+    .recent-crashes { margin-top: 12px; padding-top: 12px; border-top: 1px solid #3f3f46; }
+    .recent-crashes h3 { font-size: 0.9rem; color: #a1a1aa; margin-bottom: 8px; }
+    .crash-table { width: 100%; font-size: 0.8rem; }
+    .crash-table th { text-align: left; color: #71717a; padding: 4px 8px; }
+    .crash-table td { padding: 4px 8px; }
+    .crash-table .exploit-high { color: #f87171; }
+    .crash-table .exploit-medium { color: #fbbf24; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>IoT Firmware Grey-box Fuzzer</h1>
+    <p class="subtitle">面向 IoT 固件协议的自动化灰盒模糊测试 · Web 控制台</p>
+
+    <div class="card">
+      <h2>测试配置</h2>
+      <div class="form-row">
+        <label title="选择要测试的协议，决定报文如何做结构化变异">协议</label>
+        <select id="protocol">
+          <option value="mqtt">MQTT</option>
+          <option value="coap">CoAP</option>
+          <option value="http">HTTP</option>
+        </select>
+        <label title="目标程序/固件的 CPU 架构，存根模式下可忽略">架构</label>
+        <select id="arch">
+          <option value="arm">ARM</option>
+          <option value="mips">MIPS</option>
+          <option value="mipsel">MIPSel</option>
+          <option value="aarch64">AArch64</option>
+          <option value="x86">x86</option>
+          <option value="x86_64">x86_64</option>
+        </select>
+        <label title="整次测试运行多少秒后自动停止，0 表示不限制">超时(秒)</label>
+        <input type="number" id="timeout" value="60" min="0" placeholder="0=不限">
+      </div>
+      <div class="form-row">
+        <label title="要测试的可执行文件完整路径，不填则需填固件或勾选存根">目标二进制</label>
+        <input type="text" id="binary" placeholder="可选，如 /path/to/mosquitto">
+      </div>
+      <div class="form-row">
+        <label title="固件镜像路径，将自动解包并寻找目标程序">固件路径</label>
+        <input type="text" id="firmware" placeholder="可选，如 /path/to/firmware.bin">
+      </div>
+      <div class="form-row">
+        <label title="崩溃与报告保存目录，不填则使用默认 output">输出目录</label>
+        <input type="text" id="output" placeholder="可选，默认 ./output">
+      </div>
+      <div class="form-row">
+        <label title="种子调度策略，影响不同种子被选中的概率">调度策略</label>
+        <select id="power_schedule">
+          <option value="fast">fast（偏好执行快的种子）</option>
+          <option value="explore">explore（均衡探索）</option>
+          <option value="exploit">exploit（偏向近期有收益的种子）</option>
+          <option value="rare">rare（优先稀有路径）</option>
+          <option value="mmopt">mmopt（综合优化）</option>
+        </select>
+      </div>
+      <div class="checkbox-row">
+        <label title="不启动 QEMU、不连真实程序，仅用内置假执行体验流程"><input type="checkbox" id="no_qemu" checked> 存根模式（不启动 QEMU，先体验流程）</label>
+        <label title="关闭强化学习对种子与变异策略的调度"><input type="checkbox" id="no_rl"> 禁用强化学习调度</label>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnStart">开始测试</button>
+        <button class="btn btn-danger" id="btnStop" disabled>停止测试</button>
+        <a class="btn btn-secondary" href="#" id="linkReport" target="_blank" style="display:none;">打开最新报告</a>
+      </div>
+      <div class="seed-section">
+        <h2>生成种子</h2>
+        <div class="form-row">
+          <label>协议</label>
+          <select id="seed_protocol"><option value="mqtt">MQTT</option><option value="http">HTTP</option></select>
+          <label>数量</label>
+          <input type="number" id="seed_count" value="20" min="1" style="width:80px;">
+          <button class="btn btn-secondary" id="btnSeed">生成种子</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>实时统计 <span id="statusText"><span class="status-dot stopped"></span>未运行</span> <span id="countdown" class="countdown"></span></h2>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="value" id="statExecs">0</div><div class="label">执行次数</div></div>
+        <div class="stat-box success"><div class="value" id="statSpeed">0</div><div class="label">速度 /s</div></div>
+        <div class="stat-box danger"><div class="value" id="statCrashes">0</div><div class="label">唯一崩溃</div></div>
+        <div class="stat-box"><div class="value" id="statCorpus">0</div><div class="label">语料库</div></div>
+        <div class="stat-box"><div class="value" id="statTime">00:00</div><div class="label">运行时长</div></div>
+      </div>
+      <div id="recentCrashes" class="recent-crashes" style="display:none;">
+        <h3>最近崩溃</h3>
+        <table class="crash-table"><thead><tr><th>ID</th><th>类型</th><th>可利用性</th></tr></thead><tbody id="recentCrashesBody"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>运行日志</h2>
+      <div class="log-area" id="logArea"></div>
+    </div>
+  </div>
+
+  <script>
+    const logArea = document.getElementById('logArea');
+    const btnStart = document.getElementById('btnStart');
+    const btnStop = document.getElementById('btnStop');
+    const linkReport = document.getElementById('linkReport');
+    const statusText = document.getElementById('statusText');
+
+    function fmtTime(sec) {
+      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
+      return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    function poll() {
+      fetch('/api/status').then(r => r.json()).then(d => {
+        if (d.stats) {
+          document.getElementById('statExecs').textContent = d.stats.total_execs.toLocaleString();
+          document.getElementById('statSpeed').textContent = d.stats.execs_per_sec;
+          document.getElementById('statCrashes').textContent = d.stats.unique_crashes;
+          document.getElementById('statCorpus').textContent = d.stats.corpus_size;
+          document.getElementById('statTime').textContent = fmtTime(d.stats.elapsed_secs);
+        }
+        var countdownEl = document.getElementById('countdown');
+        if (d.running && d.timeout_secs > 0 && d.stats) {
+          var rem = Math.max(0, d.timeout_secs - Math.floor(d.stats.elapsed_secs));
+          countdownEl.textContent = '剩余 ' + rem + ' 秒';
+          countdownEl.style.display = 'inline';
+        } else {
+          countdownEl.textContent = '';
+          countdownEl.style.display = 'none';
+        }
+        if (d.recent_crashes && d.recent_crashes.length > 0) {
+          document.getElementById('recentCrashes').style.display = 'block';
+          document.getElementById('recentCrashesBody').innerHTML = d.recent_crashes.map(function(c) {
+            var cls = c.exploit === 'HIGH' ? 'exploit-high' : (c.exploit === 'MEDIUM' ? 'exploit-medium' : '');
+            return '<tr><td>' + escapeHtml(c.id) + '</td><td>' + escapeHtml(c.type) + '</td><td class="' + cls + '">' + escapeHtml(c.exploit_label || c.exploit) + '</td></tr>';
+          }).join('');
+        } else {
+          document.getElementById('recentCrashes').style.display = 'none';
+        }
+        if (d.log && d.log.length) {
+          logArea.innerHTML = d.log.map(l => '<div class="log-line"><span class="time">' + l.t + '</span>' + escapeHtml(l.msg) + '</div>').join('');
+          logArea.scrollTop = logArea.scrollHeight;
+        }
+        if (d.running) {
+          statusText.innerHTML = '<span class="status-dot running"></span>运行中';
+          btnStart.disabled = true;
+          btnStop.disabled = false;
+        } else {
+          statusText.innerHTML = '<span class="status-dot stopped"></span>未运行';
+          btnStart.disabled = false;
+          btnStop.disabled = true;
+        }
+        if (d.latest_report) {
+          linkReport.href = '/reports/' + d.latest_report;
+          linkReport.style.display = 'inline-block';
+        }
+      }).catch(() => {});
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    setInterval(poll, 2000);
+    poll();
+
+    btnStart.addEventListener('click', () => {
+      const payload = {
+        protocol: document.getElementById('protocol').value,
+        arch: document.getElementById('arch').value,
+        power_schedule: document.getElementById('power_schedule').value,
+        timeout: parseInt(document.getElementById('timeout').value, 10) || 0,
+        no_qemu: document.getElementById('no_qemu').checked,
+        no_rl: document.getElementById('no_rl').checked,
+        binary: document.getElementById('binary').value.trim(),
+        firmware: document.getElementById('firmware').value.trim(),
+        output: document.getElementById('output').value.trim(),
+      };
+      fetch('/api/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(r => r.json())
+        .then(d => { if (!d.ok) alert(d.error || '启动失败'); poll(); })
+        .catch(e => { alert('请求失败: ' + e); });
+    });
+
+    btnStop.addEventListener('click', () => {
+      fetch('/api/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(r => r.json())
+        .then(() => poll());
+    });
+
+    document.getElementById('btnSeed').addEventListener('click', () => {
+      const payload = {
+        protocol: document.getElementById('seed_protocol').value,
+        count: parseInt(document.getElementById('seed_count').value, 10) || 10,
+        output: './seeds',
+      };
+      fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(r => r.json())
+        .then(d => { alert(d.ok ? d.message : (d.error || '失败')); })
+        .catch(e => alert('请求失败: ' + e));
+    });
+  </script>
+</body>
+</html>
