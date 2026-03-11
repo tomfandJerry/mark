@@ -9,6 +9,18 @@ venv/
 env/
 ENV/
 
+# 敏感信息（切勿提交）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+*.p12
+*.pfx
+config/local*.yaml
+config/*secret*
+
 # 模糊测试输出（可选：若希望备份语料/崩溃样本可删掉下面几行）
 output/
 IoTFirmwareFuzzer/output/
@@ -19,6 +31,10 @@ seeds/
 rl_model/
 *.pickle
 *.pkl
+
+# 压缩包（避免把打包备份提交进仓库）
+*.zip
+*.tar.gz
 
 # 日志与临时
 *.log
