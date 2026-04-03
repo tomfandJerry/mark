@@ -10,7 +10,8 @@ fuzzer:
 emulation:
   engine: "qemu"
   qemu_path: "qemu-system-arm"
-  qemu_user_path: "qemu-arm"
+  # Windows 下若用 winget 安装了 QEMU，可改为完整路径（新开终端后 PATH 也可能已包含 qemu）
+  qemu_user_path: "qemu-arm"  # 或: "C:\\Program Files\\qemu\\qemu-arm.exe"
   mode: "user"
   architecture: "arm"
   memory: "256M"

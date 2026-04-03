@@ -2,11 +2,15 @@
 import os
 import subprocess
 import shutil
+import tempfile
 import logging
 from dataclasses import dataclass
 from typing import Optional, List
 
 logger = logging.getLogger("IoTFuzzer.FirmwareLoader")
+
+# Windows/Linux 通用：固件解包临时目录
+_DEFAULT_WORK_DIR = os.path.join(tempfile.gettempdir(), "firmware_work")
 
 @dataclass
 class FirmwareInfo:
@@ -19,7 +23,8 @@ class FirmwareInfo:
 COMMON_TARGETS = ["mosquitto", "httpd", "uhttpd", "coap-server", "telnetd", "dropbear"]
 
 class FirmwareLoader:
-    def __init__(self, binwalk_path: str = "binwalk", work_dir: str = "/tmp/firmware_work"):
+    def __init__(self, binwalk_path: str = "binwalk", work_dir: str = None):
+        work_dir = work_dir or _DEFAULT_WORK_DIR
         self.binwalk_path = binwalk_path
         self.work_dir = work_dir
         os.makedirs(work_dir, exist_ok=True)

@@ -5,177 +5,389 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>IoT Firmware Fuzzer - Web UI</title>
   <style>
+    :root {
+      --bg-deep: #050510;
+      --bg-panel: rgba(12, 18, 32, 0.72);
+      --border: rgba(56, 189, 248, 0.22);
+      --border-strong: rgba(34, 211, 238, 0.45);
+      --cyan: #22d3ee;
+      --cyan-dim: rgba(34, 211, 238, 0.15);
+      --violet: #a78bfa;
+      --magenta: #e879f9;
+      --text: #e8e8ef;
+      --text-muted: #94a3b8;
+      --glow: 0 0 24px rgba(34, 211, 238, 0.12);
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(145deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
-      color: #e4e4e7;
+      font-family: "Segoe UI", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+      color: var(--text);
       min-height: 100vh;
-      padding: 24px;
+      padding: 0;
+      position: relative;
+      overflow-x: hidden;
     }
-    .container { max-width: 960px; margin: 0 auto; }
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      margin-bottom: 4px;
-      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(34, 211, 238, 0.12), transparent 50%),
+        radial-gradient(ellipse 80% 50% at 100% 50%, rgba(167, 139, 250, 0.08), transparent 45%),
+        linear-gradient(180deg, #050510 0%, #0a0f1a 40%, #06080f 100%);
+      pointer-events: none;
+    }
+    .grid-bg::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(34, 211, 238, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+    }
+    .page-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 20px 24px 32px; }
+    .top-hud {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+    }
+    .hud-brand { display: flex; flex-direction: column; gap: 2px; }
+    .hud-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--cyan), var(--violet));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .subtitle { color: #71717a; font-size: 0.9rem; margin-bottom: 24px; }
-    .card {
-      background: rgba(30, 30, 46, 0.8);
-      border: 1px solid #3f3f46;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
+    .hud-sub { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.12em; }
+    .hud-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; flex: 1; min-width: 200px; }
+    .chip {
+      font-size: 0.75rem;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text-muted);
+      font-family: "Consolas", "JetBrains Mono", monospace;
     }
-    .card h2 { font-size: 1rem; color: #a1a1aa; margin-bottom: 12px; font-weight: 600; }
-    .form-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 12px; }
-    .form-row label { min-width: 80px; color: #a1a1aa; }
-    .form-row input[type="text"], .form-row input[type="number"], .form-row select {
-      padding: 8px 12px;
-      border-radius: 8px;
-      border: 1px solid #3f3f46;
-      background: #27272a;
-      color: #e4e4e7;
-      font-size: 0.9rem;
+    .chip strong { color: var(--cyan); font-weight: 600; }
+    .chip.on { border-color: rgba(74, 222, 128, 0.45); box-shadow: 0 0 16px rgba(74, 222, 128, 0.12); }
+    .chip.on strong { color: #4ade80; }
+    .chip.err { border-color: rgba(248, 113, 113, 0.5); color: #fecaca; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, var(--cyan), var(--violet), var(--magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .form-row input[type="number"] { width: 100px; }
-    .form-row input[type="text"] { flex: 1; min-width: 120px; }
-    .form-row input:focus, .form-row select:focus { outline: none; border-color: #6366f1; }
-    .checkbox-row { display: flex; gap: 20px; align-items: center; margin-top: 8px; }
-    .checkbox-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-    .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #6366f1; }
-    .btn {
+    .subtitle { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 14px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 18px; padding: 4px; border-radius: 12px; background: rgba(0,0,0,0.35); border: 1px solid var(--border); width: fit-content; }
+    .tab-btn {
       padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 500;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
       cursor: pointer;
-      transition: opacity 0.2s;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: color 0.2s, box-shadow 0.2s, border-color 0.2s;
     }
-    .btn:hover { opacity: 0.9; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: linear-gradient(90deg, #6366f1, #8b5cf6); color: white; }
-    .btn-danger { background: #dc2626; color: white; }
-    .btn-secondary { background: #3f3f46; color: #e4e4e7; }
-    .actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: #fff;
+      border-color: var(--border-strong);
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(167, 139, 250, 0.15));
+      box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
     }
-    .stat-box {
-      background: #27272a;
-      border-radius: 8px;
-      padding: 12px;
-      text-align: center;
-      border: 1px solid #3f3f46;
+    .tab-pane { display: none; animation: fadeIn 0.35s ease; }
+    .tab-pane.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--glow);
+      backdrop-filter: blur(10px);
+      position: relative;
     }
-    .stat-box .value { font-size: 1.5rem; font-weight: 700; color: #60a5fa; }
-    .stat-box .label { font-size: 0.75rem; color: #71717a; margin-top: 2px; }
-    .stat-box.danger .value { color: #f87171; }
-    .stat-box.success .value { color: #4ade80; }
-    .log-area {
-      background: #18181b;
-      border: 1px solid #3f3f46;
-      border-radius: 8px;
-      padding: 12px;
-      height: 280px;
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 18px; right: 18px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+      opacity: 0.6;
+    }
+    .card h2 {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .form-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 12px; }
+    .form-row label { min-width: 90px; color: var(--text-muted); font-size: 0.85rem; }
+    .form-row input[type="text"], .form-row input[type="number"], .form-row select {
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.4);
+      color: var(--text);
+      font-size: 0.9rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-row input[type="number"] { width: 110px; }
+    .form-row input[type="text"] { flex: 1; min-width: 160px; }
+    .form-row input:focus, .form-row select:focus {
+      outline: none;
+      border-color: var(--border-strong);
+      box-shadow: 0 0 0 3px var(--cyan-dim);
+    }
+    .checkbox-row { display: flex; gap: 20px; align-items: center; margin-top: 8px; }
+    .checkbox-row label { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-muted); font-size: 0.88rem; }
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, #0891b2, #6366f1);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.25);
+    }
+    .btn-danger { background: linear-gradient(135deg, #b91c1c, #dc2626); color: #fff; box-shadow: 0 4px 18px rgba(220, 38, 38, 0.25); }
+    .btn-warning { background: linear-gradient(135deg, #c2410c, #ea580c); color: #fff; }
+    .btn-secondary {
+      background: rgba(0, 0, 0, 0.45);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--border-strong); box-shadow: 0 0 16px rgba(34, 211, 238, 0.1); }
+    .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 10px currentColor; animation: pulse 1.8s ease-in-out infinite; }
+    .status-dot.running { background: #4ade80; color: #4ade80; }
+    .status-dot.stopped { background: #64748b; color: #64748b; animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+    .shell {
+      position: relative;
+      background: rgba(2, 6, 14, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      height: 320px;
       overflow-y: auto;
-      font-family: "Consolas", "Monaco", monospace;
+      font-family: "JetBrains Mono", "Consolas", "Monaco", monospace;
       font-size: 0.8rem;
       line-height: 1.5;
-      color: #a1a1aa;
+      color: #cbd5e1;
+      box-shadow: inset 0 0 40px rgba(34, 211, 238, 0.04);
     }
-    .log-line { margin-bottom: 2px; }
-    .log-line .time { color: #71717a; margin-right: 8px; }
-    .status-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 6px;
-      animation: pulse 1.5s infinite;
+    .shell::after {
+      content: "";
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(34, 211, 238, 0.02) 2px, rgba(34, 211, 238, 0.02) 4px);
+      opacity: 0.5;
     }
-    .status-dot.running { background: #4ade80; }
-    .status-dot.stopped { background: #71717a; animation: none; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .link-report { color: #60a5fa; text-decoration: none; }
-    .link-report:hover { text-decoration: underline; }
-    .seed-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid #3f3f46; }
-    .countdown { color: #fbbf24; font-size: 0.9rem; margin-left: 8px; }
-    .recent-crashes { margin-top: 12px; padding-top: 12px; border-top: 1px solid #3f3f46; }
-    .recent-crashes h3 { font-size: 0.9rem; color: #a1a1aa; margin-bottom: 8px; }
-    .crash-table { width: 100%; font-size: 0.8rem; }
-    .crash-table th { text-align: left; color: #71717a; padding: 4px 8px; }
-    .crash-table td { padding: 4px 8px; }
-    .crash-table .exploit-high { color: #f87171; }
-    .crash-table .exploit-medium { color: #fbbf24; }
+    .log-line { margin-bottom: 3px; word-break: break-word; }
+    .log-line .time { color: #64748b; margin-right: 10px; font-variant-numeric: tabular-nums; }
+    .cmd-preview {
+      flex: 1;
+      min-height: 44px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px dashed var(--border-strong);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: "JetBrains Mono", "Consolas", monospace;
+      font-size: 0.78rem;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      box-shadow: inset 0 0 24px rgba(34, 211, 238, 0.05);
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat-box {
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .stat-box:hover { border-color: rgba(34, 211, 238, 0.35); box-shadow: 0 0 20px rgba(34, 211, 238, 0.08); }
+    .stat-box .value { font-size: 1.45rem; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; text-shadow: 0 0 20px rgba(34, 211, 238, 0.35); }
+    .stat-box .label { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.06em; }
+    .stat-box.danger .value { color: #f87171; text-shadow: 0 0 18px rgba(248, 113, 113, 0.35); }
+    .stat-box.success .value { color: #4ade80; text-shadow: 0 0 18px rgba(74, 222, 128, 0.3); }
+    .countdown { color: #fbbf24; font-size: 0.88rem; margin-left: 8px; text-shadow: 0 0 12px rgba(251, 191, 36, 0.35); }
+    .recent-crashes { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .crash-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
+    .crash-table th { text-align: left; color: var(--text-muted); padding: 8px; font-weight: 600; }
+    .crash-table td { padding: 8px; border-top: 1px solid rgba(34, 211, 238, 0.08); }
+    a.btn-secondary { text-decoration: none; display: inline-flex; align-items: center; }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="page-inner">
+    <header class="top-hud">
+      <div class="hud-brand">
+        <span class="hud-title">IoT Fuzzer Console</span>
+        <span class="hud-sub">GREY-BOX · PROTOCOL-AWARE</span>
+      </div>
+      <div class="hud-chips">
+        <span class="chip" id="hudTab"><strong>视图</strong> · 搭建的设备</span>
+        <span class="chip" id="hudDevice"><strong>设备</strong> · 离线</span>
+        <span class="chip" id="hudFuzz"><strong>Fuzz</strong> · 空闲</span>
+        <span class="chip err" id="hudErr" title="" style="display:none;"></span>
+      </div>
+    </header>
     <h1>IoT Firmware Grey-box Fuzzer</h1>
-    <p class="subtitle">面向 IoT 固件协议的自动化灰盒模糊测试 · Web 控制台</p>
+    <p class="subtitle">主页面：设备搭建与模糊测试</p>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-device">搭建的设备</button>
+      <button class="tab-btn" data-tab="tab-fuzz">模糊测试</button>
+    </div>
 
-    <div class="card">
-      <h2>测试配置</h2>
-      <div class="form-row">
-        <label title="选择要测试的协议，决定报文如何做结构化变异">协议</label>
-        <select id="protocol">
-          <option value="mqtt">MQTT</option>
-          <option value="coap">CoAP</option>
-          <option value="http">HTTP</option>
-        </select>
-        <label title="目标程序/固件的 CPU 架构，存根模式下可忽略">架构</label>
-        <select id="arch">
-          <option value="arm">ARM</option>
-          <option value="mips">MIPS</option>
-          <option value="mipsel">MIPSel</option>
-          <option value="aarch64">AArch64</option>
-          <option value="x86">x86</option>
-          <option value="x86_64">x86_64</option>
-        </select>
-        <label title="整次测试运行多少秒后自动停止，0 表示不限制">超时(秒)</label>
-        <input type="number" id="timeout" value="60" min="0" placeholder="0=不限">
+    <div id="tab-device" class="tab-pane active">
+      <div class="card">
+        <h2>设备配置（只读展示 + 控制）</h2>
+        <div class="form-row">
+          <label>架构</label>
+          <select id="dev_arch">
+            <option value="arm">ARM</option><option value="mips">MIPS</option><option value="mipsel">MIPSel</option>
+            <option value="aarch64">AArch64</option><option value="x86">x86</option><option value="x86_64">x86_64</option>
+          </select>
+          <label>GDB端口</label>
+          <input type="number" id="dev_gdb_port" value="1234" min="1">
+        </div>
+        <div class="form-row">
+          <label>QEMU用户态</label>
+          <input type="text" id="dev_qemu_user_path" placeholder="可选，如 qemu-arm 或完整路径">
+        </div>
+        <div class="form-row">
+          <label>RootFS</label>
+          <input type="text" id="dev_root_fs" placeholder="可选，如 /path/to/rootfs">
+        </div>
+        <div class="form-row">
+          <label>目标二进制</label>
+          <input type="text" id="dev_binary" placeholder="必填，如 /path/to/target_binary">
+        </div>
+        <div class="form-row">
+          <label>启动命令</label>
+          <div id="dev_cmd_preview" class="cmd-preview">（点击“刷新命令预览”查看）</div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary" id="btnCmdPreview">刷新命令预览</button>
+          <button class="btn btn-primary" id="btnDevStart">启动设备</button>
+          <button class="btn btn-danger" id="btnDevStop">停止设备</button>
+          <button class="btn btn-warning" id="btnDevRestart">重启设备</button>
+          <button class="btn btn-secondary" id="btnDevClearLogs">清空日志</button>
+          <button class="btn btn-secondary" id="btnCopyCmd">复制命令</button>
+          <span id="devStatus"><span class="status-dot stopped"></span>设备未运行</span>
+        </div>
+        <div class="form-row">
+          <label>识别模式</label>
+          <div id="devModeText" class="cmd-preview">user</div>
+        </div>
+        <div class="form-row">
+          <label>最近错误</label>
+          <div id="devErrorText" class="cmd-preview">无</div>
+        </div>
       </div>
-      <div class="form-row">
-        <label title="要测试的可执行文件完整路径，不填则需填固件或勾选存根">目标二进制</label>
-        <input type="text" id="binary" placeholder="可选，如 /path/to/mosquitto">
+
+      <div class="card">
+        <h2>设备交互终端（500 行滚动日志）</h2>
+        <div class="form-row">
+          <label>输入命令</label>
+          <input type="text" id="dev_terminal_input" placeholder="例如: help">
+          <button class="btn btn-primary" id="btnDevSend">发送命令</button>
+        </div>
+        <div id="devLogArea" class="shell"></div>
       </div>
-      <div class="form-row">
-        <label title="固件镜像路径，将自动解包并寻找目标程序">固件路径</label>
-        <input type="text" id="firmware" placeholder="可选，如 /path/to/firmware.bin">
+    </div>
+
+    <div id="tab-fuzz" class="tab-pane">
+      <div class="card">
+        <h2>测试配置</h2>
+        <div class="form-row">
+          <label>协议</label>
+          <select id="protocol"><option value="mqtt">MQTT</option><option value="coap">CoAP</option><option value="http">HTTP</option></select>
+          <label>架构</label>
+          <select id="arch"><option value="arm">ARM</option><option value="mips">MIPS</option><option value="mipsel">MIPSel</option><option value="aarch64">AArch64</option><option value="x86">x86</option><option value="x86_64">x86_64</option></select>
+          <label>超时(秒)</label>
+          <input type="number" id="timeout" value="60" min="0">
+        </div>
+        <div class="form-row"><label>目标二进制</label><input type="text" id="binary" placeholder="可选，如 /path/to/mosquitto"></div>
+        <div class="form-row"><label>固件路径</label><input type="text" id="firmware" placeholder="可选，如 /path/to/firmware.bin"></div>
+        <div class="form-row"><label>输出目录</label><input type="text" id="output" placeholder="可选，默认 ./output"></div>
+        <div class="form-row">
+          <label>调度策略</label>
+          <select id="power_schedule">
+            <option value="fast">fast</option><option value="explore">explore</option><option value="exploit">exploit</option><option value="rare">rare</option><option value="mmopt">mmopt</option>
+          </select>
+        </div>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="no_qemu" checked> 存根模式</label>
+          <label><input type="checkbox" id="no_rl"> 禁用强化学习调度</label>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="btnStart">开始测试</button>
+          <button class="btn btn-danger" id="btnStop" disabled>停止测试</button>
+          <a class="btn btn-secondary" href="#" id="linkReport" target="_blank" style="display:none;">打开最新报告</a>
+        </div>
       </div>
-      <div class="form-row">
-        <label title="崩溃与报告保存目录，不填则使用默认 output">输出目录</label>
-        <input type="text" id="output" placeholder="可选，默认 ./output">
+
+      <div class="card">
+        <h2>实时统计 <span id="statusText"><span class="status-dot stopped"></span>未运行</span> <span id="countdown" class="countdown"></span></h2>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="value" id="statExecs">0</div><div class="label">执行次数</div></div>
+          <div class="stat-box success"><div class="value" id="statSpeed">0</div><div class="label">速度 /s</div></div>
+          <div class="stat-box danger"><div class="value" id="statCrashes">0</div><div class="label">唯一崩溃</div></div>
+          <div class="stat-box"><div class="value" id="statCorpus">0</div><div class="label">语料库</div></div>
+          <div class="stat-box"><div class="value" id="statTime">00:00</div><div class="label">运行时长</div></div>
+        </div>
+        <div id="recentCrashes" class="recent-crashes" style="display:none;">
+          <table class="crash-table"><thead><tr><th>ID</th><th>类型</th><th>可利用性</th></tr></thead><tbody id="recentCrashesBody"></tbody></table>
+        </div>
       </div>
-      <div class="form-row">
-        <label title="种子调度策略，影响不同种子被选中的概率">调度策略</label>
-        <select id="power_schedule">
-          <option value="fast">fast（偏好执行快的种子）</option>
-          <option value="explore">explore（均衡探索）</option>
-          <option value="exploit">exploit（偏向近期有收益的种子）</option>
-          <option value="rare">rare（优先稀有路径）</option>
-          <option value="mmopt">mmopt（综合优化）</option>
-        </select>
+
+      <div class="card">
+        <h2>运行日志</h2>
+        <div class="shell" id="logArea"></div>
       </div>
-      <div class="checkbox-row">
-        <label title="不启动 QEMU、不连真实程序，仅用内置假执行体验流程"><input type="checkbox" id="no_qemu" checked> 存根模式（不启动 QEMU，先体验流程）</label>
-        <label title="关闭强化学习对种子与变异策略的调度"><input type="checkbox" id="no_rl"> 禁用强化学习调度</label>
-      </div>
-      <div class="actions">
-        <button class="btn btn-primary" id="btnStart">开始测试</button>
-        <button class="btn btn-danger" id="btnStop" disabled>停止测试</button>
-        <a class="btn btn-secondary" href="#" id="linkReport" target="_blank" style="display:none;">打开最新报告</a>
-      </div>
-      <div class="seed-section">
+
+      <div class="card">
         <h2>生成种子</h2>
         <div class="form-row">
           <label>协议</label>
@@ -186,38 +398,48 @@
         </div>
       </div>
     </div>
-
-    <div class="card">
-      <h2>实时统计 <span id="statusText"><span class="status-dot stopped"></span>未运行</span> <span id="countdown" class="countdown"></span></h2>
-      <div class="stats-grid">
-        <div class="stat-box"><div class="value" id="statExecs">0</div><div class="label">执行次数</div></div>
-        <div class="stat-box success"><div class="value" id="statSpeed">0</div><div class="label">速度 /s</div></div>
-        <div class="stat-box danger"><div class="value" id="statCrashes">0</div><div class="label">唯一崩溃</div></div>
-        <div class="stat-box"><div class="value" id="statCorpus">0</div><div class="label">语料库</div></div>
-        <div class="stat-box"><div class="value" id="statTime">00:00</div><div class="label">运行时长</div></div>
-      </div>
-      <div id="recentCrashes" class="recent-crashes" style="display:none;">
-        <h3>最近崩溃</h3>
-        <table class="crash-table"><thead><tr><th>ID</th><th>类型</th><th>可利用性</th></tr></thead><tbody id="recentCrashesBody"></tbody></table>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>运行日志</h2>
-      <div class="log-area" id="logArea"></div>
-    </div>
   </div>
 
   <script>
     const logArea = document.getElementById('logArea');
+    const devLogArea = document.getElementById('devLogArea');
     const btnStart = document.getElementById('btnStart');
     const btnStop = document.getElementById('btnStop');
     const linkReport = document.getElementById('linkReport');
     const statusText = document.getElementById('statusText');
 
-    function fmtTime(sec) {
-      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
-      return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+    function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s || ''; return div.innerHTML; }
+    function fmtTime(sec) { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60); return [h, m, s].map(v => String(v).padStart(2, '0')).join(':'); }
+
+    function devicePayload() {
+      return {
+        arch: document.getElementById('dev_arch').value,
+        gdb_port: parseInt(document.getElementById('dev_gdb_port').value, 10) || 1234,
+        qemu_user_path: document.getElementById('dev_qemu_user_path').value.trim(),
+        root_fs: document.getElementById('dev_root_fs').value.trim(),
+        binary: document.getElementById('dev_binary').value.trim(),
+      };
+    }
+
+    var TAB_NAMES = { 'tab-device': '搭建的设备', 'tab-fuzz': '模糊测试' };
+    function showTab(id) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector('[data-tab="' + id + '"]').classList.add('active');
+      var hudTab = document.getElementById('hudTab');
+      if (hudTab) hudTab.innerHTML = '<strong>视图</strong> · ' + (TAB_NAMES[id] || id);
+    }
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+
+    function updateDeviceCommandPreview() {
+      fetch('/api/device/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(devicePayload()) })
+        .then(r => r.json())
+        .then(d => {
+          if (!d.ok) return;
+          document.getElementById('dev_cmd_preview').textContent = d.command || '';
+          document.getElementById('devModeText').textContent = d.mode || 'user';
+        }).catch(() => {});
     }
 
     function poll() {
@@ -229,9 +451,9 @@
           document.getElementById('statCorpus').textContent = d.stats.corpus_size;
           document.getElementById('statTime').textContent = fmtTime(d.stats.elapsed_secs);
         }
-        var countdownEl = document.getElementById('countdown');
+        const countdownEl = document.getElementById('countdown');
         if (d.running && d.timeout_secs > 0 && d.stats) {
-          var rem = Math.max(0, d.timeout_secs - Math.floor(d.stats.elapsed_secs));
+          const rem = Math.max(0, d.timeout_secs - Math.floor(d.stats.elapsed_secs));
           countdownEl.textContent = '剩余 ' + rem + ' 秒';
           countdownEl.style.display = 'inline';
         } else {
@@ -240,10 +462,7 @@
         }
         if (d.recent_crashes && d.recent_crashes.length > 0) {
           document.getElementById('recentCrashes').style.display = 'block';
-          document.getElementById('recentCrashesBody').innerHTML = d.recent_crashes.map(function(c) {
-            var cls = c.exploit === 'HIGH' ? 'exploit-high' : (c.exploit === 'MEDIUM' ? 'exploit-medium' : '');
-            return '<tr><td>' + escapeHtml(c.id) + '</td><td>' + escapeHtml(c.type) + '</td><td class="' + cls + '">' + escapeHtml(c.exploit_label || c.exploit) + '</td></tr>';
-          }).join('');
+          document.getElementById('recentCrashesBody').innerHTML = d.recent_crashes.map(c => '<tr><td>' + escapeHtml(c.id) + '</td><td>' + escapeHtml(c.type) + '</td><td>' + escapeHtml(c.exploit_label || c.exploit) + '</td></tr>').join('');
         } else {
           document.getElementById('recentCrashes').style.display = 'none';
         }
@@ -253,28 +472,98 @@
         }
         if (d.running) {
           statusText.innerHTML = '<span class="status-dot running"></span>运行中';
-          btnStart.disabled = true;
-          btnStop.disabled = false;
+          btnStart.disabled = true; btnStop.disabled = false;
         } else {
           statusText.innerHTML = '<span class="status-dot stopped"></span>未运行';
-          btnStart.disabled = false;
-          btnStop.disabled = true;
+          btnStart.disabled = false; btnStop.disabled = true;
         }
-        if (d.latest_report) {
-          linkReport.href = '/reports/' + d.latest_report;
-          linkReport.style.display = 'inline-block';
+        var hudFuzz = document.getElementById('hudFuzz');
+        if (hudFuzz) {
+          if (d.running) { hudFuzz.className = 'chip on'; hudFuzz.innerHTML = '<strong>Fuzz</strong> · 运行中'; }
+          else { hudFuzz.className = 'chip'; hudFuzz.innerHTML = '<strong>Fuzz</strong> · 空闲'; }
+        }
+        if (d.latest_report) { linkReport.href = '/reports/' + d.latest_report; linkReport.style.display = 'inline-block'; }
+
+        if (d.device) {
+          document.getElementById('devStatus').innerHTML = d.device.running
+            ? '<span class="status-dot running"></span>设备运行中 PID=' + d.device.pid
+            : '<span class="status-dot stopped"></span>设备未运行';
+          var hudDevice = document.getElementById('hudDevice');
+          if (hudDevice) {
+            if (d.device.running) {
+              hudDevice.className = 'chip on';
+              hudDevice.innerHTML = '<strong>设备</strong> · 运行 PID ' + (d.device.pid != null ? d.device.pid : '—');
+            } else {
+              hudDevice.className = 'chip';
+              hudDevice.innerHTML = '<strong>设备</strong> · 离线';
+            }
+          }
+          var hudErr = document.getElementById('hudErr');
+          if (hudErr) {
+            var err = (d.device.last_error || '').trim();
+            if (err) {
+              hudErr.style.display = '';
+              var shortErr = err.length > 48 ? err.slice(0, 45) + '…' : err;
+              hudErr.textContent = '错误 · ' + shortErr;
+              hudErr.title = err;
+            } else {
+              hudErr.style.display = 'none';
+              hudErr.textContent = '';
+              hudErr.title = '';
+            }
+          }
+          if (d.device.command) document.getElementById('dev_cmd_preview').textContent = d.device.command;
+          document.getElementById('devModeText').textContent = d.device.mode || 'user';
+          document.getElementById('devErrorText').textContent = d.device.last_error || '无';
+          if (d.device.log) {
+            devLogArea.innerHTML = d.device.log.map(l => '<div class="log-line"><span class="time">' + l.t + '</span>' + escapeHtml(l.msg) + '</div>').join('');
+            devLogArea.scrollTop = devLogArea.scrollHeight;
+          }
         }
       }).catch(() => {});
     }
 
-    function escapeHtml(s) {
-      const div = document.createElement('div');
-      div.textContent = s;
-      return div.innerHTML;
+    var pollTimer = null;
+    function schedulePoll() {
+      if (pollTimer) clearInterval(pollTimer);
+      var ms = document.hidden ? 4000 : 1500;
+      pollTimer = setInterval(poll, ms);
     }
-
-    setInterval(poll, 2000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) poll();
+      schedulePoll();
+    });
+    schedulePoll();
     poll();
+
+    document.getElementById('btnCmdPreview').addEventListener('click', updateDeviceCommandPreview);
+    document.getElementById('btnCopyCmd').addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(document.getElementById('dev_cmd_preview').textContent || ''); alert('已复制命令'); } catch (e) { alert('复制失败: ' + e); }
+    });
+    document.getElementById('btnDevStart').addEventListener('click', () => {
+      fetch('/api/device/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(devicePayload()) })
+        .then(r => r.json()).then(d => { if (!d.ok) alert(d.error || '启动失败'); poll(); }).catch(e => alert('请求失败: ' + e));
+    });
+    document.getElementById('btnDevStop').addEventListener('click', () => {
+      fetch('/api/device/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(r => r.json()).then(() => poll());
+    });
+    document.getElementById('btnDevRestart').addEventListener('click', () => {
+      fetch('/api/device/restart', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(devicePayload()) })
+        .then(r => r.json()).then(d => { if (!d.ok) alert(d.error || '重启失败'); poll(); }).catch(e => alert('请求失败: ' + e));
+    });
+    document.getElementById('btnDevClearLogs').addEventListener('click', () => {
+      fetch('/api/device/clear-logs', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+        .then(() => poll());
+    });
+    document.getElementById('btnDevSend').addEventListener('click', () => {
+      const cmd = document.getElementById('dev_terminal_input').value.trim();
+      if (!cmd) return;
+      fetch('/api/device/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: cmd }) })
+        .then(r => r.json()).then(d => { if (!d.ok) alert(d.error || '发送失败'); document.getElementById('dev_terminal_input').value = ''; poll(); })
+        .catch(e => alert('请求失败: ' + e));
+    });
+    document.getElementById('dev_terminal_input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnDevSend').click(); });
 
     btnStart.addEventListener('click', () => {
       const payload = {
@@ -289,27 +578,13 @@
         output: document.getElementById('output').value.trim(),
       };
       fetch('/api/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        .then(r => r.json())
-        .then(d => { if (!d.ok) alert(d.error || '启动失败'); poll(); })
-        .catch(e => { alert('请求失败: ' + e); });
+        .then(r => r.json()).then(d => { if (!d.ok) alert(d.error || '启动失败'); poll(); }).catch(e => alert('请求失败: ' + e));
     });
-
-    btnStop.addEventListener('click', () => {
-      fetch('/api/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-        .then(r => r.json())
-        .then(() => poll());
-    });
-
+    btnStop.addEventListener('click', () => { fetch('/api/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' } }).then(() => poll()); });
     document.getElementById('btnSeed').addEventListener('click', () => {
-      const payload = {
-        protocol: document.getElementById('seed_protocol').value,
-        count: parseInt(document.getElementById('seed_count').value, 10) || 10,
-        output: './seeds',
-      };
+      const payload = { protocol: document.getElementById('seed_protocol').value, count: parseInt(document.getElementById('seed_count').value, 10) || 10, output: './seeds' };
       fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        .then(r => r.json())
-        .then(d => { alert(d.ok ? d.message : (d.error || '失败')); })
-        .catch(e => alert('请求失败: ' + e));
+        .then(r => r.json()).then(d => { alert(d.ok ? d.message : (d.error || '失败')); }).catch(e => alert('请求失败: ' + e));
     });
   </script>
 </body>

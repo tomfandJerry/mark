@@ -48,3 +48,7 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# 测试缓存
+.pytest_cache/
+**/.pytest_cache/
