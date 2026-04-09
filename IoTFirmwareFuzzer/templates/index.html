@@ -16,7 +16,7 @@
       --magenta: #e879f9;
       --text: #e8e8ef;
       --text-muted: #94a3b8;
-      --glow: 0 0 24px rgba(34, 211, 238, 0.12);
+      --glow: 0 0 12px rgba(34, 211, 238, 0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -28,13 +28,12 @@
       overflow-x: hidden;
     }
     .grid-bg {
-      position: fixed;
+      position: absolute;
       inset: 0;
       z-index: 0;
       background:
-        radial-gradient(ellipse 120% 80% at 50% -20%, rgba(34, 211, 238, 0.12), transparent 50%),
-        radial-gradient(ellipse 80% 50% at 100% 50%, rgba(167, 139, 250, 0.08), transparent 45%),
-        linear-gradient(180deg, #050510 0%, #0a0f1a 40%, #06080f 100%);
+        radial-gradient(ellipse 100% 70% at 50% -20%, rgba(34, 211, 238, 0.08), transparent 50%),
+        linear-gradient(180deg, #050510 0%, #0a0f1a 42%, #06080f 100%);
       pointer-events: none;
     }
     .grid-bg::before {
@@ -42,10 +41,10 @@
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(34, 211, 238, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(34, 211, 238, 0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+        linear-gradient(rgba(34, 211, 238, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.03) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity: 0.5;
     }
     .page-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 20px 24px 32px; }
     .top-hud {
@@ -59,8 +58,7 @@
       border-radius: 14px;
       background: var(--bg-panel);
       border: 1px solid var(--border);
-      box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,0.06);
-      backdrop-filter: blur(12px);
+      box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,0.04);
     }
     .hud-brand { display: flex; flex-direction: column; gap: 2px; }
     .hud-title {
@@ -85,7 +83,7 @@
       font-family: "Consolas", "JetBrains Mono", monospace;
     }
     .chip strong { color: var(--cyan); font-weight: 600; }
-    .chip.on { border-color: rgba(74, 222, 128, 0.45); box-shadow: 0 0 16px rgba(74, 222, 128, 0.12); }
+    .chip.on { border-color: rgba(74, 222, 128, 0.45); }
     .chip.on strong { color: #4ade80; }
     .chip.err { border-color: rgba(248, 113, 113, 0.5); color: #fecaca; max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     h1 {
@@ -116,7 +114,7 @@
       color: #fff;
       border-color: var(--border-strong);
       background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(167, 139, 250, 0.15));
-      box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.12);
     }
     .tab-pane { display: none; animation: fadeIn 0.35s ease; }
     .tab-pane.active { display: block; }
@@ -128,7 +126,6 @@
       padding: 20px 22px;
       margin-bottom: 18px;
       box-shadow: var(--glow);
-      backdrop-filter: blur(10px);
       position: relative;
     }
     .card::before {
@@ -174,23 +171,23 @@
       font-size: 0.88rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      transition: transform 0.15s, opacity 0.2s;
     }
     .btn:hover:not(:disabled) { transform: translateY(-1px); }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     .btn-primary {
       background: linear-gradient(135deg, #0891b2, #6366f1);
       color: #fff;
-      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.25);
+      box-shadow: 0 3px 12px rgba(34, 211, 238, 0.2);
     }
-    .btn-danger { background: linear-gradient(135deg, #b91c1c, #dc2626); color: #fff; box-shadow: 0 4px 18px rgba(220, 38, 38, 0.25); }
+    .btn-danger { background: linear-gradient(135deg, #b91c1c, #dc2626); color: #fff; box-shadow: 0 3px 10px rgba(220, 38, 38, 0.2); }
     .btn-warning { background: linear-gradient(135deg, #c2410c, #ea580c); color: #fff; }
     .btn-secondary {
       background: rgba(0, 0, 0, 0.45);
       color: var(--text);
       border-color: var(--border);
     }
-    .btn-secondary:hover:not(:disabled) { border-color: var(--border-strong); box-shadow: 0 0 16px rgba(34, 211, 238, 0.1); }
+    .btn-secondary:hover:not(:disabled) { border-color: var(--border-strong); }
     .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
     .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 10px currentColor; animation: pulse 1.8s ease-in-out infinite; }
     .status-dot.running { background: #4ade80; color: #4ade80; }
@@ -208,16 +205,7 @@
       font-size: 0.8rem;
       line-height: 1.5;
       color: #cbd5e1;
-      box-shadow: inset 0 0 40px rgba(34, 211, 238, 0.04);
-    }
-    .shell::after {
-      content: "";
-      pointer-events: none;
-      position: absolute;
-      inset: 0;
-      border-radius: 10px;
-      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(34, 211, 238, 0.02) 2px, rgba(34, 211, 238, 0.02) 4px);
-      opacity: 0.5;
+      box-shadow: none;
     }
     .log-line { margin-bottom: 3px; word-break: break-word; }
     .log-line .time { color: #64748b; margin-right: 10px; font-variant-numeric: tabular-nums; }
@@ -233,7 +221,7 @@
       color: #e2e8f0;
       white-space: pre-wrap;
       word-break: break-all;
-      box-shadow: inset 0 0 24px rgba(34, 211, 238, 0.05);
+      box-shadow: none;
     }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .stat-box {
@@ -244,12 +232,12 @@
       border: 1px solid var(--border);
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .stat-box:hover { border-color: rgba(34, 211, 238, 0.35); box-shadow: 0 0 20px rgba(34, 211, 238, 0.08); }
-    .stat-box .value { font-size: 1.45rem; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; text-shadow: 0 0 20px rgba(34, 211, 238, 0.35); }
+    .stat-box:hover { border-color: rgba(34, 211, 238, 0.35); }
+    .stat-box .value { font-size: 1.45rem; font-weight: 800; color: var(--cyan); font-variant-numeric: tabular-nums; }
     .stat-box .label { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.06em; }
-    .stat-box.danger .value { color: #f87171; text-shadow: 0 0 18px rgba(248, 113, 113, 0.35); }
-    .stat-box.success .value { color: #4ade80; text-shadow: 0 0 18px rgba(74, 222, 128, 0.3); }
-    .countdown { color: #fbbf24; font-size: 0.88rem; margin-left: 8px; text-shadow: 0 0 12px rgba(251, 191, 36, 0.35); }
+    .stat-box.danger .value { color: #f87171; }
+    .stat-box.success .value { color: #4ade80; }
+    .countdown { color: #fbbf24; font-size: 0.88rem; margin-left: 8px; }
     .recent-crashes { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
     .crash-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; }
     .crash-table th { text-align: left; color: var(--text-muted); padding: 8px; font-weight: 600; }
@@ -303,11 +291,15 @@
           <label>目标二进制</label>
           <input type="text" id="dev_binary" placeholder="必填，如 /path/to/target_binary">
         </div>
+        <div class="checkbox-row">
+          <label><input type="checkbox" id="dev_demo_shell"> 示例交互终端（直接启动本机 shell）</label>
+        </div>
         <div class="form-row">
           <label>启动命令</label>
           <div id="dev_cmd_preview" class="cmd-preview">（点击“刷新命令预览”查看）</div>
         </div>
         <div class="actions">
+          <button class="btn btn-secondary" id="btnDevDemo">加载设备示例</button>
           <button class="btn btn-secondary" id="btnCmdPreview">刷新命令预览</button>
           <button class="btn btn-primary" id="btnDevStart">启动设备</button>
           <button class="btn btn-danger" id="btnDevStop">停止设备</button>
@@ -362,6 +354,7 @@
           <label><input type="checkbox" id="no_rl"> 禁用强化学习调度</label>
         </div>
         <div class="actions">
+          <button class="btn btn-secondary" id="btnFuzzDemo">加载测试示例</button>
           <button class="btn btn-primary" id="btnStart">开始测试</button>
           <button class="btn btn-danger" id="btnStop" disabled>停止测试</button>
           <a class="btn btn-secondary" href="#" id="linkReport" target="_blank" style="display:none;">打开最新报告</a>
@@ -407,6 +400,8 @@
     const btnStop = document.getElementById('btnStop');
     const linkReport = document.getElementById('linkReport');
     const statusText = document.getElementById('statusText');
+    let isWindowScrolling = false;
+    let scrollDebounceTimer = null;
 
     function escapeHtml(s) { const div = document.createElement('div'); div.textContent = s || ''; return div.innerHTML; }
     function fmtTime(sec) { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60); return [h, m, s].map(v => String(v).padStart(2, '0')).join(':'); }
@@ -418,7 +413,30 @@
         qemu_user_path: document.getElementById('dev_qemu_user_path').value.trim(),
         root_fs: document.getElementById('dev_root_fs').value.trim(),
         binary: document.getElementById('dev_binary').value.trim(),
+        demo_shell: document.getElementById('dev_demo_shell').checked,
       };
+    }
+
+    function loadDeviceDemo() {
+      document.getElementById('dev_arch').value = 'arm';
+      document.getElementById('dev_gdb_port').value = '1234';
+      document.getElementById('dev_qemu_user_path').value = '';
+      document.getElementById('dev_root_fs').value = '';
+      document.getElementById('dev_binary').value = '';
+      document.getElementById('dev_demo_shell').checked = true;
+      updateDeviceCommandPreview();
+    }
+
+    function loadFuzzDemo() {
+      document.getElementById('protocol').value = 'mqtt';
+      document.getElementById('arch').value = 'arm';
+      document.getElementById('timeout').value = '60';
+      document.getElementById('binary').value = '';
+      document.getElementById('firmware').value = '';
+      document.getElementById('output').value = './output';
+      document.getElementById('power_schedule').value = 'fast';
+      document.getElementById('no_qemu').checked = true;
+      document.getElementById('no_rl').checked = false;
     }
 
     var TAB_NAMES = { 'tab-device': '搭建的设备', 'tab-fuzz': '模糊测试' };
@@ -466,7 +484,7 @@
         } else {
           document.getElementById('recentCrashes').style.display = 'none';
         }
-        if (d.log && d.log.length) {
+        if (d.log && d.log.length && !isWindowScrolling) {
           logArea.innerHTML = d.log.map(l => '<div class="log-line"><span class="time">' + l.t + '</span>' + escapeHtml(l.msg) + '</div>').join('');
           logArea.scrollTop = logArea.scrollHeight;
         }
@@ -515,7 +533,7 @@
           if (d.device.command) document.getElementById('dev_cmd_preview').textContent = d.device.command;
           document.getElementById('devModeText').textContent = d.device.mode || 'user';
           document.getElementById('devErrorText').textContent = d.device.last_error || '无';
-          if (d.device.log) {
+          if (d.device.log && !isWindowScrolling) {
             devLogArea.innerHTML = d.device.log.map(l => '<div class="log-line"><span class="time">' + l.t + '</span>' + escapeHtml(l.msg) + '</div>').join('');
             devLogArea.scrollTop = devLogArea.scrollHeight;
           }
@@ -526,17 +544,28 @@
     var pollTimer = null;
     function schedulePoll() {
       if (pollTimer) clearInterval(pollTimer);
-      var ms = document.hidden ? 4000 : 1500;
+      var ms = document.hidden ? 4500 : (isWindowScrolling ? 3200 : 1800);
       pollTimer = setInterval(poll, ms);
     }
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) poll();
       schedulePoll();
     });
+    window.addEventListener('scroll', function () {
+      isWindowScrolling = true;
+      if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
+      scrollDebounceTimer = setTimeout(function () {
+        isWindowScrolling = false;
+        schedulePoll();
+      }, 280);
+      schedulePoll();
+    }, { passive: true });
     schedulePoll();
     poll();
 
     document.getElementById('btnCmdPreview').addEventListener('click', updateDeviceCommandPreview);
+    document.getElementById('btnDevDemo').addEventListener('click', loadDeviceDemo);
+    document.getElementById('btnFuzzDemo').addEventListener('click', loadFuzzDemo);
     document.getElementById('btnCopyCmd').addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(document.getElementById('dev_cmd_preview').textContent || ''); alert('已复制命令'); } catch (e) { alert('复制失败: ' + e); }
     });
@@ -586,6 +615,10 @@
       fetch('/api/seed', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
         .then(r => r.json()).then(d => { alert(d.ok ? d.message : (d.error || '失败')); }).catch(e => alert('请求失败: ' + e));
     });
+
+    // 支持 landing 页 hash 直达指定 tab
+    if (window.location.hash === '#tab-fuzz') showTab('tab-fuzz');
+    if (window.location.hash === '#tab-device') showTab('tab-device');
   </script>
 </body>
 </html>

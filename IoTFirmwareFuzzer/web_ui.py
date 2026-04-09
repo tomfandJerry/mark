@@ -84,6 +84,21 @@ def _build_qemu_user_command(data: dict):
     cfg = _load_cfg()
     emu_cfg = cfg.get("emulation", {})
     firmware_cfg = cfg.get("firmware", {})
+    demo_shell = bool(data.get("demo_shell", False))
+
+    if demo_shell:
+        if os.name == "nt":
+            shell_bin = os.environ.get("COMSPEC", "cmd.exe")
+        else:
+            shell_bin = os.environ.get("SHELL", "/bin/bash")
+        return [shell_bin], {
+            "arch": "host",
+            "root_fs": "",
+            "gdb_port": 0,
+            "binary": shell_bin,
+            "mode": "demo-shell",
+            "demo_shell": True,
+        }
 
     arch = (data.get("arch") or emu_cfg.get("architecture") or "arm").strip()
     qemu_user_path = (data.get("qemu_user_path") or emu_cfg.get("qemu_user_path") or "").strip()
@@ -111,7 +126,7 @@ def _build_qemu_user_command(data: dict):
             cmd.append(binary)
     else:
         cmd += ["-M", "virt", "-cpu", "cortex-a15", "-m", "256M", "-nographic", "-S"]
-    return cmd, {"arch": arch, "root_fs": root_fs, "gdb_port": gdb_port, "binary": binary, "mode": mode}
+    return cmd, {"arch": arch, "root_fs": root_fs, "gdb_port": gdb_port, "binary": binary, "mode": mode, "demo_shell": False}
 
 
 def _reader_thread(proc: subprocess.Popen):
@@ -155,6 +170,7 @@ def _start_device(data: dict):
             "gdb_port": resolved["gdb_port"],
             "binary": resolved["binary"],
             "mode": resolved["mode"],
+            "demo_shell": resolved.get("demo_shell", False),
         }
         device_log_buffer.clear()
         _log_device(f"[device] 启动命令: {device_command}")
@@ -213,6 +229,11 @@ def run_fuzzer_async(config_path: str, firmware_path: str, target_binary: str, t
 
 @app.route("/")
 def index():
+    return send_from_directory(os.path.join(os.path.dirname(__file__), "templates"), "landing.html")
+
+
+@app.route("/console")
+def console():
     return send_from_directory(os.path.join(os.path.dirname(__file__), "templates"), "index.html")
 
 
